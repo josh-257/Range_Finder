@@ -3,6 +3,9 @@
 
 #include <stdint.h>
 
+#define RX_DATA_HEAD_BYTE 0x59
+#define PARSER_BUFFER_LENGTH_MAX (13)
+
 typedef enum _PARSER_STATE_T{
     PARSER_LOOKING_FOR_START = 0,
     PARSER_LOOKING_FOR_LEN,
