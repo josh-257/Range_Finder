@@ -1,0 +1,3 @@
+gcc -Wall -Wextra -g -ITests/Unity -ICore/Inc -ITests -I. Tests/Unity/unity.c Tests/Unity/unity_fixture.c Core/Src/circular_buffer.c Tests/circular_bufferTest.c Tests/circular_bufferTestRunner.c -o run_tests.exe
+collect2.exe: error: ld returned 1 exit status
+make: *** [Makefile:25: run_tests.exe] Error 1
