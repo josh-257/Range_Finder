@@ -14,7 +14,7 @@ circBuff CircularBuffer_Init(void)
     circBuff c = &instance;
     c->head = 0;
     c->tail = 0;
-    memset(c->buffer, 0, BUFF_SIZE);
+    memset(c->buffer, 0, BUFF_SIZE * sizeof(Item));
     return c;
 }
 

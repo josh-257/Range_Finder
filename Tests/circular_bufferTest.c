@@ -45,7 +45,7 @@ TEST(circular_buffer, GetOneByte)
 TEST(circular_buffer, PutAndGetMultipleBytes)
 {
     Item data_read[12];
-    Item msg[12] = "hello world";
+    Item msg[12] = {'h', 'e', 'l', 'l', 'o', ' ', 'w', 'o', 'r', 'l', 'd', '\0'};
     for(int i = 0; i < 12; i++)
     {
         TEST_ASSERT_TRUE(CircularBuffer_Put(circBuffTest, msg[i]));

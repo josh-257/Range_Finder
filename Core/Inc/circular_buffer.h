@@ -7,6 +7,8 @@
 #define BUFF_SIZE (256+1) //Extra byte used by CircularBuffer_IsFull()
 
 typedef struct Circular_Buffer *circBuff;
+
+//Select type of data to be stored by circular buffer
 typedef uint16_t Item;
 
 circBuff CircularBuffer_Init(void);
