@@ -21,22 +21,32 @@ TEST_TEAR_DOWN(parser)
 TEST(parser, LookForLenByteAfterReceivingHeadByte)
 {
     uint8_t random = 'm';
-    TEST_ASSERT_NULL(Parser_AddByte(random));
+    Parser_RXByte(random);
     TEST_ASSERT_EQUAL(PARSER_LOOKING_FOR_START, state);
-    TEST_ASSERT_NULL(Parser_AddByte(RX_DATA_HEAD_BYTE));
+    Parser_RXByte(RX_DATA_HEAD_BYTE);
     TEST_ASSERT_EQUAL(PARSER_LOOKING_FOR_LEN, state);
 }
 
 TEST(parser, ParserResetIfInvalidLen)
 {
-    Parser_AddByte(RX_DATA_HEAD_BYTE);
-    Parser_AddByte('Z');
+    Parser_RXByte(RX_DATA_HEAD_BYTE);
+    Parser_RXByte('Z');
     TEST_ASSERT_EQUAL(PARSER_LOOKING_FOR_START, state);
 }
 
 TEST(parser, LookForIdAfterLenByte)
 {
-    Parser_AddByte(RX_DATA_HEAD_BYTE);
-    TEST_ASSERT_NULL(Parser_AddByte(4));
+    Parser_RXByte(RX_DATA_HEAD_BYTE);
+    Parser_RXByte(4);
     TEST_ASSERT_EQUAL(PARSER_LOOKING_FOR_ID, state);
+}
+
+TEST(parser, ParserResetIfInvalidId)
+{
+
+}
+
+TEST(parser, LookForDataAfterValidIdByte)
+{
+
 }

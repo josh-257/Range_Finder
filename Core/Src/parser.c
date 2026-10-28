@@ -11,7 +11,7 @@
 
 STATIC PARSER_STATE_T state = PARSER_LOOKING_FOR_START;
 
-uint8_t *Parser_AddByte(uint8_t NewByte)
+void Parser_RXByte(uint8_t NewByte)
 {
     
     switch (state)
@@ -20,24 +20,24 @@ uint8_t *Parser_AddByte(uint8_t NewByte)
         if(NewByte == RX_DATA_HEAD_BYTE)
         {
             state = PARSER_LOOKING_FOR_LEN;
-            return NULL;
+            return;
         } 
         break;
     case PARSER_LOOKING_FOR_LEN:
         if(NewByte >= 4 && NewByte <= 12)
         {
             state = PARSER_LOOKING_FOR_ID;
-            return NULL;
+            return;
         }
         else
         {
             state = PARSER_LOOKING_FOR_START;
-            return NULL;
+            return;
         }
         break;
     
     default:
         break;
     }
-    return NULL;
+    return;
 } 

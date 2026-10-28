@@ -14,6 +14,6 @@ typedef enum _PARSER_STATE_T{
     PARSER_LOOKING_FOR_CHECKSUM
 }PARSER_STATE_T;
 
-uint8_t* Parser_AddByte(uint8_t NewByte);
+void Parser_RXByte(uint8_t NewByte);
 
 #endif
