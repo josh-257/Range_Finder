@@ -1,7 +1,7 @@
 #include "Parser.h"
 #include <stddef.h>
 #include <stdint.h>
-#include <ctype.h>
+#include <stdio.h>
 
 #ifndef TEST_PARSER
 #define STATIC static
@@ -9,35 +9,70 @@
 #define STATIC
 #endif
 
-STATIC PARSER_STATE_T state = PARSER_LOOKING_FOR_START;
+STATIC Parser_State_t Parserstate = PARSER_LOOKING_FOR_START;
+STATIC uint8_t dataIndex;
+STATIC uint8_t headByteCount;
+STATIC uint8_t checkSum;
 
-void Parser_RXByte(uint8_t NewByte)
+STATIC uint8_t parserBuffer[MAX_DATA_LEN];
+
+static void Parser_SplitRXMessage(Msg_Data_t *msg);
+
+Return_Status_t Parser_RXByte(Msg_Data_t *msg, uint8_t NewByte)
 {
-    
-    switch (state)
+    switch (Parserstate)
     {
     case PARSER_LOOKING_FOR_START:
         if(NewByte == RX_DATA_HEAD_BYTE)
         {
-            state = PARSER_LOOKING_FOR_LEN;
-            return;
-        } 
-        break;
-    case PARSER_LOOKING_FOR_LEN:
-        if(NewByte >= 4 && NewByte <= 12)
-        {
-            state = PARSER_LOOKING_FOR_ID;
-            return;
+            if(headByteCount >= 1)
+            {
+                headByteCount = 0;
+                Parserstate = PARSER_LOOKING_FOR_DATA;
+                checkSum = RX_DATA_HEAD_BYTE + RX_DATA_HEAD_BYTE;
+            }
+            else
+            {
+                headByteCount++;
+            }
         }
         else
         {
-            state = PARSER_LOOKING_FOR_START;
-            return;
+            Parser_Reset();
+        }   
+        break;
+    case PARSER_LOOKING_FOR_DATA:
+        parserBuffer[dataIndex++] = NewByte;
+        checkSum += NewByte;
+        if(dataIndex >= MAX_DATA_LEN)
+        {
+            Parserstate = PARSER_LOOKING_FOR_CHECKSUM;
         }
         break;
-    
-    default:
-        break;
+    case PARSER_LOOKING_FOR_CHECKSUM:
+        if(NewByte == checkSum)
+        {
+            Parser_SplitRXMessage(msg);
+            Parser_Reset();
+            return PARSER_DATA_FRAME_READY;
+        }
+        Parser_Reset();
+        return PARSER_CHECKSUM_ERROR;
     }
-    return;
+    return PARSER_IN_PROGRESS;
 } 
+
+void Parser_Reset(void)
+{
+    dataIndex = 0;
+    headByteCount = 0;
+    checkSum = 0;
+    Parserstate = PARSER_LOOKING_FOR_START;
+}
+
+static void Parser_SplitRXMessage(Msg_Data_t *msg)
+{
+    msg->dist = (parserBuffer[DIST_L_INDEX]) | (parserBuffer[DIST_H_INDEX] << 8);
+    msg->amps = (parserBuffer[AMP_L_INDEX]) | (parserBuffer[AMP_H_INDEX] << 8);
+    msg->temp = (parserBuffer[TEMP_L_INDEX]) | (parserBuffer[TEMP_H_INDEX] << 8);
+}
