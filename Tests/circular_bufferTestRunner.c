@@ -12,4 +12,6 @@ TEST_GROUP_RUNNER(circular_buffer)
     RUN_TEST_CASE(circular_buffer, GetReturnsFalseIfBufferEmpty);
     RUN_TEST_CASE(circular_buffer, HeadAndTailIndexesWrapToZero);
     RUN_TEST_CASE(circular_buffer, WrapAroundPreservesDataOrder);
+    RUN_TEST_CASE(circular_buffer, ReturnTrueIfBufferHalfFull);
+    RUN_TEST_CASE(circular_buffer, HalfFullBoundaryAtEveryOffset);
 }

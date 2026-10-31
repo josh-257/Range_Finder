@@ -16,6 +16,16 @@ TEST_TEAR_DOWN(circular_buffer)
 
 }
 
+static void advance_indices(int offset)
+{
+    Item out;
+    for (int i = 0; i < offset; i++)
+    {
+        CircularBuffer_Put(circBuffTest, 0);
+        CircularBuffer_Get(circBuffTest, &out);
+    }
+}
+
 TEST(circular_buffer, AllSetToZero)
 {
     TEST_ASSERT_EQUAL(0, getHead(circBuffTest));
@@ -131,4 +141,49 @@ TEST(circular_buffer, WrapAroundPreservesDataOrder)
         TEST_ASSERT_EQUAL_UINT8(100 + i, out);
     }
     TEST_ASSERT_TRUE(CircularBuffer_IsEmpty(circBuffTest));
+}
+
+TEST(circular_buffer, ReturnTrueIfBufferHalfFull)
+{
+    TEST_ASSERT_FALSE(CircularBuffer_IsHalfFull(circBuffTest));
+    Item out;
+    for (int i = 0; i < BUFF_SIZE / 2; i++)
+    {
+        TEST_ASSERT_TRUE(CircularBuffer_Put(circBuffTest, i));
+        
+    }
+    TEST_ASSERT_TRUE(CircularBuffer_IsHalfFull(circBuffTest));
+    for (int i = 0; i < BUFF_SIZE / 2; i++)
+    {
+        TEST_ASSERT_TRUE(CircularBuffer_Get(circBuffTest, &out));
+        TEST_ASSERT_EQUAL_UINT8(i, out);
+    }
+    TEST_ASSERT_FALSE(CircularBuffer_IsHalfFull(circBuffTest));
+    for (int i = 0; i < BUFF_SIZE-1; i++)
+    {
+        TEST_ASSERT_TRUE(CircularBuffer_Put(circBuffTest, i));
+        
+    }
+    TEST_ASSERT_TRUE(CircularBuffer_IsFull(circBuffTest));
+    TEST_ASSERT_TRUE(CircularBuffer_IsHalfFull(circBuffTest));
+
+}
+
+
+
+TEST(circular_buffer, HalfFullBoundaryAtEveryOffset)
+{
+    for (int offset = 0; offset < BUFF_SIZE; offset++)
+    {
+
+        circBuffTest = CircularBuffer_Init();
+        advance_indices(offset);
+        
+        for (int i = 0; i < BUFF_SIZE / 2 - 1; i++)
+            CircularBuffer_Put(circBuffTest, i);
+        TEST_ASSERT_FALSE_MESSAGE(CircularBuffer_IsHalfFull(circBuffTest), "one below half");
+
+        CircularBuffer_Put(circBuffTest, 0);
+        TEST_ASSERT_TRUE_MESSAGE(CircularBuffer_IsHalfFull(circBuffTest), "exactly half");
+    }
 }

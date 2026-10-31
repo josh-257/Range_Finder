@@ -9,6 +9,11 @@ struct Circular_Buffer{
 
 static struct Circular_Buffer instance;
 
+static uint32_t CircularBuffer_Count(circBuff c)
+{
+    return (c->tail + BUFF_SIZE - c->head) % BUFF_SIZE;
+}
+
 circBuff CircularBuffer_Init(void)
 {
     circBuff c = &instance;
@@ -50,6 +55,13 @@ bool CircularBuffer_IsFull(circBuff c)
     uint32_t tail_next = (c->tail + 1) % BUFF_SIZE;
     return tail_next == c->head;
 }
+
+bool CircularBuffer_IsHalfFull(circBuff c)
+{
+    return CircularBuffer_Count(c) >= BUFF_SIZE / 2;
+}
+
+
 
 //For testing
 uint32_t getHead(circBuff c)
