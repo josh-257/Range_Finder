@@ -2,8 +2,8 @@
 #include <string.h>
 
 struct Circular_Buffer{
-    uint32_t head;
-    uint32_t tail;
+    volatile uint32_t head;
+    volatile uint32_t tail;
     Item buffer[BUFF_SIZE];
 };
 

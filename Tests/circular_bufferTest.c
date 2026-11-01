@@ -5,6 +5,8 @@ TEST_GROUP(circular_buffer);
 
 circBuff circBuffTest;
 
+#define DIMENSION_OF(a) (sizeof(a)/sizeof(a[0]))
+
 // Unity requires these two functions, even if they are empty
 TEST_SETUP(circular_buffer) 
 {

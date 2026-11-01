@@ -1,8 +1,8 @@
 #include "unity_fixture.h"
 #include "Core/Inc/parser.h"
 
-#define DIMENSION_OF(a) (sizeof(a)/sizeof(a[0]))
 
+#define DIMENSION_OF(a) (sizeof(a)/sizeof(a[0]))
 
 TEST_GROUP(parser);
 
@@ -14,9 +14,9 @@ static Return_Status_t sendMessage(uint8_t *msg, uint8_t len)
     int i;
     for(i = 0; i < len-1; i++)
     {
-        Parser_RXByte(&msgTest, msg[i]);
+        Parser_AddByte(&msgTest, msg[i]);
     }
-    return Parser_RXByte(&msgTest, msg[i]);
+    return Parser_AddByte(&msgTest, msg[i]);
 }
 
 // Unity requires these two functions, even if they are empty
@@ -32,19 +32,19 @@ TEST_TEAR_DOWN(parser)
 
 TEST(parser, ParserResetIfInvalidHeadByte)
 {
-    Parser_RXByte(&msgTest, RX_DATA_HEAD_BYTE);
-    Parser_RXByte(&msgTest, 'Z');
+    Parser_AddByte(&msgTest, RX_DATA_HEAD_BYTE);
+    Parser_AddByte(&msgTest, 'Z');
     TEST_ASSERT_EQUAL(PARSER_LOOKING_FOR_START, Parserstate);
 
-    Parser_RXByte(&msgTest, 'Z');
-    Parser_RXByte(&msgTest, RX_DATA_HEAD_BYTE);
+    Parser_AddByte(&msgTest, 'Z');
+    Parser_AddByte(&msgTest, RX_DATA_HEAD_BYTE);
     TEST_ASSERT_EQUAL(PARSER_LOOKING_FOR_START, Parserstate);
 }
 
 TEST(parser, LookForDataAfterValidHeadByte)
 {
-    Parser_RXByte(&msgTest, RX_DATA_HEAD_BYTE);
-    Parser_RXByte(&msgTest, RX_DATA_HEAD_BYTE);
+    Parser_AddByte(&msgTest, RX_DATA_HEAD_BYTE);
+    Parser_AddByte(&msgTest, RX_DATA_HEAD_BYTE);
     TEST_ASSERT_EQUAL(PARSER_LOOKING_FOR_DATA, Parserstate);
 }
 
@@ -97,14 +97,14 @@ TEST(parser, ZeroChecksumIsRejectedWhenSumIsNotZero)
 {
     uint8_t msg[] = {0x59,0x59,0x04,0x04,0x02,0x02,0x05,0x05,0x00};
     msgTest.dist = 0xAAAA;
-    sendMessage(msg, sizeof(msg));
+    sendMessage(msg, DIMENSION_OF(msg));
     TEST_ASSERT_EQUAL_HEX16(0xAAAA, msgTest.dist);
 }
 
 TEST(parser, ChecksumAboveFFIsTruncatedTo8Bits)
 {
     uint8_t msg[] = {0x59,0x59,0x64,0x00,0x90,0x01,0xC8,0x08,0x77};
-    sendMessage(msg, sizeof(msg));
+    sendMessage(msg, DIMENSION_OF(msg));
     TEST_ASSERT_EQUAL_HEX16(100, msgTest.dist);
     TEST_ASSERT_EQUAL_HEX16(400, msgTest.amps);
     TEST_ASSERT_EQUAL_HEX16(0x08C8, msgTest.temp);
@@ -113,14 +113,14 @@ TEST(parser, ChecksumAboveFFIsTruncatedTo8Bits)
 TEST(parser, HeaderByteInsidePayloadDoesNotDisturbFrame)
 {
     uint8_t msg[] = {0x59,0x59,0x59,0x00,0x90,0x01,0xC8,0x08,0x6C};
-    sendMessage(msg, sizeof(msg));
+    sendMessage(msg, DIMENSION_OF(msg));
     TEST_ASSERT_EQUAL_HEX16(89, msgTest.dist);
 }
 
 TEST(parser, HighBytesAreDecodedLittleEndian)
 {
     uint8_t msg[] = {0x59,0x59,0x23,0x01,0x90,0x01,0xC8,0x08,0x37};
-    sendMessage(msg, sizeof(msg));
+    sendMessage(msg, DIMENSION_OF(msg));
     TEST_ASSERT_EQUAL_HEX16(0x0123, msgTest.dist);
 }
 

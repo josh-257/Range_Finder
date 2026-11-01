@@ -1,7 +1,6 @@
 #include "Parser.h"
 #include <stddef.h>
 #include <stdint.h>
-#include <stdio.h>
 
 #ifndef TEST_PARSER
 #define STATIC static
@@ -18,7 +17,7 @@ STATIC uint8_t parserBuffer[MAX_DATA_LEN];
 
 static void Parser_SplitRXMessage(Msg_Data_t *msg);
 
-Return_Status_t Parser_RXByte(Msg_Data_t *msg, uint8_t NewByte)
+Return_Status_t Parser_AddByte(Msg_Data_t *msg, volatile uint8_t NewByte)
 {
     switch (Parserstate)
     {

@@ -33,7 +33,7 @@ typedef struct{
     uint16_t temp;
 }Msg_Data_t;
 
-Return_Status_t Parser_RXByte(Msg_Data_t *msg, uint8_t NewByte);
+Return_Status_t Parser_AddByte(Msg_Data_t *msg, volatile uint8_t NewByte);
 void Parser_Reset(void);
 
 #endif

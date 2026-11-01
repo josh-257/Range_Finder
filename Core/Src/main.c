@@ -17,13 +17,24 @@
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
+#include <stdio.h>
 #include "main.h"
-
+#include "usart.h"
+#include "gpio.h"
+#include "stm32f4xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "circular_buffer.h"
+#include "parser.h"
 /* USER CODE END Includes */
+/*********************************This is needed for using SWV printf**************************/
 
+int _write(int file, char *ptr, int len) {
+    for (int i = 0; i < len; i++) {
+        ITM_SendChar((*ptr++));
+    }
+    return len;
+}
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
 
@@ -42,13 +53,17 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+Msg_Data_t lidarData;
+volatile Msg_Data_t lastFrame;
+circBuff circularBuffer;
+volatile uint32_t badFrameCount;
+volatile uint8_t rxData;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-
+uint32_t findMean(circBuff c);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -84,8 +99,12 @@ int main(void)
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
+  MX_GPIO_Init();
+  MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-
+  circularBuffer = CircularBuffer_Init();
+  printf("Starting program...\n");
+  HAL_UART_Receive_IT(&huart1, (uint8_t*)&rxData, 1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -95,6 +114,12 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+    if(CircularBuffer_IsHalfFull(circularBuffer))
+    {
+      uint32_t average = findMean(circularBuffer);
+      printf("dist: %u, amp: %u, temp: %u\n", lastFrame.dist, lastFrame.amps, lastFrame.temp);
+      printf("distance: %lu \n", average);
+    }
   }
   /* USER CODE END 3 */
 }
@@ -141,7 +166,45 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+//Drains buffer then finds average of all distance values
+uint32_t findMean(circBuff c)
+{
+  uint32_t sum = 0, count = 0;
+  Item data;
+  while(CircularBuffer_Get(c, &data))
+  {
+    sum += data;
+    count++;
+  }
+  //Avoid dividing by zero
+  return count ? sum/count : 0;
+}
 
+
+/* UART receive callback*/
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+  Return_Status_t parserRetVal = Parser_AddByte(&lidarData, rxData);
+
+  //Anything below 100Amps is inaccurate
+  if(parserRetVal == PARSER_DATA_FRAME_READY && lidarData.amps > 100)
+  {
+    lastFrame = lidarData;
+    CircularBuffer_Put(circularBuffer, lidarData.dist);
+  }
+  else if(parserRetVal == PARSER_CHECKSUM_ERROR)
+  {
+    badFrameCount++;
+  }
+  //Re enable interrupt
+  HAL_UART_Receive_IT(&huart1, (uint8_t*)&rxData, 1);
+}
+
+//Handle a UART error by terminating reception
+void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
+{
+  HAL_UART_Receive_IT(&huart1, (uint8_t*)&rxData, 1);
+}
 /* USER CODE END 4 */
 
 /**
@@ -171,6 +234,7 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE BEGIN 6 */
   /* User can add his own implementation to report the file name and line number,
      ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+  while(1);
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
